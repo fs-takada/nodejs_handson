@@ -2,13 +2,12 @@ const https = require('https');
 const Compute = require('@google-cloud/compute');
 const compute = new Compute();
 
-const zone = compute.zone('asia-east1-a');
-const vm = zone.vm('xxx');
+const zone = compute.zone('');
+const vm = zone.vm('');
 const options = {
-  host: 'stg.xxx',
+  host: '',
   rejectUnauthorized: false,
 };
-
 
 https.get(options, (res) => {
 
@@ -18,23 +17,35 @@ https.get(options, (res) => {
   if (statusCode === 200) {
     console.log('正常です');
   } else {
-    console.log('インスタンスを再起動します。');
-    //vm.start();
+    console.log('インスタンスを再起動させます');
+    restart_instance();
   };
 
 }).on('error', (e) => {
-  console.log('Error code:'+ console.error(e) + '\nインスタンスを起動します。');
-  //インスタンスの状態を取得
-  vm.getMetadata(function(err, metadata, apiResponse) {
-    console.log(metadata.status);
-
-    if (metadata.status !== 'TERMINATED') {
-      vm.stop();
-      setTimeout(() => {
-        console.log('30秒たったよ')
-      }, 30000);
-    }
-    vm.start();
-  });
-
+  console.log('インスタンスを起動します。');
+  restart_instance();
 });
+
+function restart_instance() {
+    vm.getMetadata().then(function(data) {
+        const metadata = data[0];
+        console.log(metadata.status);
+
+        if (metadata.status !== 'TERMINATED') {
+            vm.stop(function(err, operation, apiResponse) {
+                if (!err) console.log('インスタンスを停止させます');
+            });
+        }
+
+        setTimeout(() => {
+            vm.start(function(err, operation, apiResponse) {
+                if (!err) {
+                    console.log('インスタンスの起動に成功しました。');
+                } else {
+                    console.log('インスタンスの起動に失敗しました。');
+                }
+            });
+      }, 60000);
+    });
+
+}
