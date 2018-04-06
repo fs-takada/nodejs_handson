@@ -2,29 +2,31 @@ const https = require('https');
 const Compute = require('@google-cloud/compute');
 const compute = new Compute();
 
-const zone = compute.zone('');
-const vm = zone.vm('');
+const zone = compute.zone('asia-east1-a');
+const vm = zone.vm('corporate-test');
 const options = {
-  host: '',
+  host: 'stg.fullspeed.co.jp',
   rejectUnauthorized: false,
 };
 
-https.get(options, (res) => {
+exports.auto_check_instance  = (req, res) => {
+    https.get(options, (res) => {
+      var statusCode = res.statusCode;
+      console.log(`statuscode: ${statusCode}`);
 
-  var statusCode = res.statusCode;
-  console.log(`statuscode: ${statusCode}`);
-
-  if (statusCode === 200) {
-    console.log('正常です');
-  } else {
-    console.log('インスタンスを再起動させます');
-    restart_instance();
-  };
-
-}).on('error', (e) => {
-  console.log('インスタンスを起動します。');
-  restart_instance();
-});
+      if (statusCode === 200) {
+        console.log('完了しました');
+      } else {
+        console.log('内部エラーの可能性があります。再起動させます。');
+        restart_instance();
+        res.status(200).send('完了しました');
+      };
+      process.exit();
+    }).on('error', (e) => {
+      console.log('インスタンスかapacheが停止しています。インスタンスを起動します。');
+      restart_instance();
+    });
+};
 
 function restart_instance() {
     vm.getMetadata().then(function(data) {
@@ -45,7 +47,6 @@ function restart_instance() {
                     console.log('インスタンスの起動に失敗しました。');
                 }
             });
-      }, 60000);
+        }, 50000);
     });
-
 }
