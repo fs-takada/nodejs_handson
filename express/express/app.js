@@ -7,7 +7,7 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var bbsRouter = require('./routes/bbs');
+var bbsRouter = require('./routes/bbs'); //なぜかusersと同じようにできなかったため、moduleを定義してそれを読み出すようにした
 
 var app = express();
 
